@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>Pi Music Generator - Live Stream</title>
+    <title>Pi Music - Mobile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         * {
@@ -15,849 +14,326 @@
         }
         
         body {
-            font-family: 'Courier New', monospace;
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 10px;
+            padding: 15px;
             color: #fff;
-            overflow-x: hidden;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
         
         h1 {
             text-align: center;
-            margin-bottom: 5px;
-            font-size: clamp(1.5em, 5vw, 2.5em);
-            word-break: break-word;
-        }
-        
-        .emoji {
-            font-size: clamp(2em, 8vw, 3em);
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        
-        .subtitle {
-            text-align: center;
-            margin-bottom: 15px;
-            opacity: 0.9;
-            font-size: clamp(0.9em, 3vw, 1.1em);
-            padding: 0 10px;
-        }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
+            font-size: 1.8em;
             margin-bottom: 20px;
         }
         
-        @media (min-width: 768px) {
-            .controls {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        
-        .control-group {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        label {
-            margin-bottom: 5px;
-            font-weight: bold;
-            font-size: clamp(0.9em, 2.5vw, 1em);
-        }
-        
-        input, select, button {
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: clamp(14px, 3vw, 16px);
-            touch-action: manipulation;
-        }
-        
-        input, select {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-        
-        select option {
-            background: #764ba2;
-            color: #fff;
+        .status {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.2em;
         }
         
         button {
-            background: #4CAF50;
-            color: white;
-            cursor: pointer;
+            width: 100%;
+            padding: 20px;
+            font-size: 1.3em;
+            border: none;
+            border-radius: 12px;
             font-weight: bold;
+            margin-bottom: 10px;
+            cursor: pointer;
             transition: all 0.3s;
-            font-size: clamp(16px, 3.5vw, 18px);
-            padding: 15px;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        @media (min-width: 768px) {
-            button {
-                grid-column: 1 / -1;
-            }
         }
         
         button:active {
             transform: scale(0.95);
         }
         
-        button:hover:not(:disabled) {
-            background: #45a049;
+        .start-btn {
+            background: #4CAF50;
+            color: white;
         }
         
-        button:disabled {
-            background: #666;
-            cursor: not-allowed;
+        .stop-btn {
+            background: #f44336;
+            color: white;
         }
         
-        .progress-bars {
-            margin-bottom: 15px;
-        }
-        
-        .progress-item {
-            margin-bottom: 10px;
-        }
-        
-        .progress-label {
-            font-size: clamp(0.8em, 2vw, 0.9em);
-            margin-bottom: 5px;
-            opacity: 0.9;
-        }
-        
-        .progress-bar {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            height: 25px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            background: linear-gradient(90deg, #4CAF50, #8BC34A);
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s;
+        .piano {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: clamp(0.75em, 2vw, 0.85em);
-        }
-        
-        .progress-fill.fetching {
-            background: linear-gradient(90deg, #2196F3, #64B5F6);
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        
-        @media (min-width: 640px) {
-            .stats {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-        
-        .stat-box {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 12px 8px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: clamp(1.1em, 3vw, 1.5em);
-            font-weight: bold;
-            margin-bottom: 5px;
-            word-break: break-word;
-        }
-        
-        .stat-label {
-            font-size: clamp(0.75em, 2vw, 0.9em);
-            opacity: 0.8;
-        }
-        
-        .piano-visual {
-            display: flex;
-            justify-content: center;
-            gap: 3px;
-            margin: 15px 0;
-            min-height: 80px;
+            gap: 5px;
+            margin: 20px 0;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
         
-        @media (min-width: 640px) {
-            .piano-visual {
-                gap: 5px;
-                min-height: 100px;
-            }
-        }
-        
-        .piano-key {
+        .key {
             flex: 1;
             min-width: 50px;
-            max-width: 80px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 3px;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            touch-action: manipulation;
-        }
-        
-        @media (min-width: 640px) {
-            .piano-key {
-                padding: 15px 5px;
-            }
-        }
-        
-        .piano-key.active {
-            background: rgba(76, 175, 80, 0.8);
-            transform: scale(1.1);
-            border-color: #FFE66D;
-            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
-        }
-        
-        .key-digit {
-            font-size: clamp(1.3em, 4vw, 2em);
+            padding: 15px 5px;
+            text-align: center;
+            font-size: 1.5em;
             font-weight: bold;
+            transition: all 0.2s;
         }
         
-        .key-note {
-            font-size: clamp(0.65em, 1.8vw, 0.8em);
-            opacity: 0.7;
-            margin-top: 3px;
+        .key.active {
+            background: #4CAF50;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px #4CAF50;
         }
         
-        .pi-display {
+        .digits {
             background: rgba(0, 0, 0, 0.4);
-            border-radius: 10px;
             padding: 15px;
-            margin: 15px 0;
-            max-height: 250px;
+            border-radius: 10px;
+            max-height: 200px;
             overflow-y: auto;
-            overflow-x: hidden;
-            font-size: clamp(12px, 3vw, 16px);
-            line-height: 1.8;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        @media (min-width: 768px) {
-            .pi-display {
-                max-height: 300px;
-                padding: 20px;
-            }
-        }
-        
-        .pi-display h3 {
-            margin-bottom: 15px;
-            color: #4CAF50;
-            font-size: clamp(1em, 3vw, 1.2em);
-        }
-        
-        .pi-digits {
-            letter-spacing: 2px;
-            font-family: 'Courier New', monospace;
-            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 1.1em;
+            letter-spacing: 3px;
             word-break: break-all;
         }
         
-        @media (min-width: 640px) {
-            .pi-digits {
-                letter-spacing: 3px;
-            }
-        }
-        
         .digit {
-            display: inline-block;
+            display: inline;
             transition: all 0.3s;
         }
         
         .digit.playing {
             color: #FFE66D;
-            transform: scale(1.3);
-            text-shadow: 0 0 10px #FFE66D;
+            font-size: 1.5em;
         }
         
-        .music-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
+        .controls {
+            margin: 20px 0;
         }
         
-        .music-btn {
-            background: #f44336;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        select {
+            width: 100%;
             padding: 12px;
-            -webkit-tap-highlight-color: transparent;
+            font-size: 1.1em;
+            border-radius: 8px;
+            border: none;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
         }
         
-        .music-btn:active {
-            transform: scale(0.95);
-        }
-        
-        .music-btn:hover {
-            background: #da190b;
-        }
-        
-        /* Improve touch targets */
-        @media (hover: none) {
-            button {
-                min-height: 44px;
-            }
-            
-            input, select {
-                min-height: 44px;
-            }
-        }
-        
-        /* Landscape mobile optimization */
-        @media (max-height: 500px) and (orientation: landscape) {
-            .container {
-                padding: 10px;
-            }
-            
-            .emoji {
-                font-size: 1.5em;
-                margin-bottom: 5px;
-            }
-            
-            h1 {
-                font-size: 1.3em;
-                margin-bottom: 3px;
-            }
-            
-            .subtitle {
-                font-size: 0.8em;
-                margin-bottom: 10px;
-            }
-            
-            .piano-visual {
-                min-height: 60px;
-            }
-            
-            .pi-display {
-                max-height: 150px;
-            }
+        select option {
+            background: #764ba2;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="emoji">🎵🥧🎶</div>
-        <h1>Pi Music Live Stream</h1>
-        <p class="subtitle">Plays music while fetching - Infinite Pi!</p>
+        <h1>🎵 Pi Music 🥧</h1>
+        
+        <div class="status" id="status">
+            Tap START to begin
+        </div>
         
         <div class="controls">
-            <div class="control-group">
-                <label>Target Digits:</label>
-                <input type="number" id="targetDigits" value="10000" min="100" max="1000000" step="100">
-            </div>
+            <label>Speed:</label>
+            <select id="speed">
+                <option value="100">Very Fast</option>
+                <option value="200" selected>Fast</option>
+                <option value="300">Normal</option>
+                <option value="500">Slow</option>
+            </select>
             
-            <div class="control-group">
-                <label>Playback Speed:</label>
-                <select id="playbackSpeed">
-                    <option value="50">Super Fast (50ms)</option>
-                    <option value="100">Very Fast (100ms)</option>
-                    <option value="200" selected>Fast (200ms)</option>
-                    <option value="300">Normal (300ms)</option>
-                    <option value="500">Slow (500ms)</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label>Instrument:</label>
-                <select id="instrument">
-                    <option value="piano" selected>🎹 Piano</option>
-                    <option value="guitar">🎸 Guitar</option>
-                    <option value="bass">🎸 Bass Guitar</option>
-                    <option value="organ">🎹 Organ</option>
-                    <option value="strings">🎻 Strings</option>
-                    <option value="synth">🎛️ Synthesizer</option>
-                    <option value="sine">〰️ Sine Wave</option>
-                    <option value="triangle">△ Triangle</option>
-                    <option value="square">▢ Square</option>
-                </select>
-            </div>
-            
-            <div class="control-group">
-                <label>Scale:</label>
-                <select id="scale">
-                    <option value="major" selected>C Major (Happy)</option>
-                    <option value="minor">C Minor (Sad)</option>
-                    <option value="pentatonic">Pentatonic (Asian)</option>
-                    <option value="chromatic">Chromatic (All notes)</option>
-                </select>
-            </div>
-            
-            <button id="startBtn" onclick="startStreaming()">🎵 Start Music Stream</button>
+            <label>Instrument:</label>
+            <select id="instrument">
+                <option value="sine" selected>Simple Tone</option>
+                <option value="triangle">Triangle</option>
+                <option value="square">Square</option>
+            </select>
         </div>
         
-        <div class="progress-bars">
-            <div class="progress-item">
-                <div class="progress-label">Fetching Progress:</div>
-                <div class="progress-bar">
-                    <div id="fetchProgress" class="progress-fill fetching">0%</div>
-                </div>
-            </div>
-            <div class="progress-item">
-                <div class="progress-label">Playback Progress:</div>
-                <div class="progress-bar">
-                    <div id="playProgress" class="progress-fill">0%</div>
-                </div>
-            </div>
-        </div>
+        <button class="start-btn" id="startBtn" onclick="start()">
+            🔊 TAP TO START AUDIO
+        </button>
         
-        <div class="stats">
-            <div class="stat-box">
-                <div id="statFetched" class="stat-value">0</div>
-                <div class="stat-label">Fetched</div>
-            </div>
-            <div class="stat-box">
-                <div id="statPlaying" class="stat-value">-</div>
-                <div class="stat-label">Playing</div>
-            </div>
-            <div class="stat-box">
-                <div id="statPlayed" class="stat-value">0</div>
-                <div class="stat-label">Played</div>
-            </div>
-            <div class="stat-box">
-                <div id="statBuffer" class="stat-value">0</div>
-                <div class="stat-label">Buffer</div>
-            </div>
-        </div>
+        <button class="stop-btn" id="stopBtn" onclick="stop()" style="display: none;">
+            ⏹️ STOP
+        </button>
         
-        <div class="piano-visual" id="pianoVisual">
-            <!-- Piano keys 0-9 -->
-        </div>
+        <div class="piano" id="piano"></div>
         
-        <div class="pi-display">
-            <h3>🔢 Pi Digits (Live):</h3>
-            <div id="piDigitsDisplay" class="pi-digits"></div>
-        </div>
-        
-        <div class="music-controls">
-            <button class="music-btn" onclick="pauseMusic()">⏸️ Pause</button>
-            <button class="music-btn" onclick="stopMusic()">⏹️ Stop</button>
-        </div>
+        <div class="digits" id="digits"></div>
     </div>
 
     <script>
-        // Musical scale mappings
-        const scales = {
-            major: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'],
-            minor: ['C4', 'D4', 'Eb4', 'F4', 'G4', 'Ab4', 'Bb4', 'C5', 'D5', 'Eb5'],
-            pentatonic: ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5'],
-            chromatic: ['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4']
-        };
-        
-        let synth;
+        const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'];
+        let synth = null;
         let piDigits = '';
-        let fetchedDigits = 0;
-        let targetDigits = 10000;
-        let playbackPosition = 0;
+        let position = 0;
         let isPlaying = false;
-        let isFetching = false;
-        let playbackInterval;
-        let fetchInterval;
-        let currentInstrument = 'piano';
-        let audioInitialized = false;
-
-        // Fetch chunk
-        async function fetchChunk(start, count) {
-            const url = `https://api.pi.delivery/v1/pi?start=${start}&numberOfDigits=${count}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`API error: ${response.status}`);
+        let interval = null;
+        
+        // Initialize piano keys
+        function initPiano() {
+            const piano = document.getElementById('piano');
+            piano.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                const key = document.createElement('div');
+                key.className = 'key';
+                key.id = `key${i}`;
+                key.textContent = i;
+                piano.appendChild(key);
+            }
+        }
+        
+        // Fetch Pi
+        async function fetchPi(start, count) {
+            const response = await fetch(`https://api.pi.delivery/v1/pi?start=${start}&numberOfDigits=${count}`);
             const data = await response.json();
             return data.content;
         }
-
-        // Initialize audio with different instruments
-        async function initAudio() {
-            // CRITICAL: Start Tone.js AudioContext (required for mobile)
-            if (!audioInitialized) {
-                console.log('🔊 Starting audio context...');
-                await Tone.start();
-                audioInitialized = true;
-                console.log('✅ Audio context started!');
-            }
-            
-            const instrumentType = document.getElementById('instrument').value;
-            currentInstrument = instrumentType;
-            
-            // Dispose old synth if exists
-            if (synth) {
-                synth.dispose();
-            }
-            
-            // Create instrument based on selection
-            switch(instrumentType) {
-                case 'piano':
-                    // Use Sampler for realistic piano sound
-                    synth = new Tone.Sampler({
-                        urls: {
-                            C4: "C4.mp3",
-                            "D#4": "Ds4.mp3",
-                            "F#4": "Fs4.mp3",
-                            A4: "A4.mp3",
-                        },
-                        release: 1,
-                        baseUrl: "https://tonejs.github.io/audio/salamander/",
-                        onload: () => {
-                            console.log('🎹 Piano samples loaded!');
-                        }
-                    }).toDestination();
-                    break;
-                    
-                case 'guitar':
-                    // Guitar-like sound using plucked string
-                    synth = new Tone.PluckSynth({
-                        attackNoise: 1,
-                        dampening: 4000,
-                        resonance: 0.9
-                    }).toDestination();
-                    break;
-                    
-                case 'bass':
-                    // Bass guitar
-                    synth = new Tone.MonoSynth({
-                        oscillator: {
-                            type: "square"
-                        },
-                        envelope: {
-                            attack: 0.1,
-                            decay: 0.3,
-                            sustain: 0.4,
-                            release: 0.8
-                        },
-                        filterEnvelope: {
-                            attack: 0.001,
-                            decay: 0.01,
-                            sustain: 0.5,
-                            baseFrequency: 200,
-                            octaves: 2.6
-                        }
-                    }).toDestination();
-                    break;
-                    
-                case 'organ':
-                    // Organ sound
-                    synth = new Tone.Synth({
-                        oscillator: {
-                            type: "sine4"
-                        },
-                        envelope: {
-                            attack: 0.005,
-                            decay: 0.1,
-                            sustain: 0.9,
-                            release: 0.1
-                        }
-                    }).toDestination();
-                    break;
-                    
-                case 'strings':
-                    // String ensemble
-                    synth = new Tone.Synth({
-                        oscillator: {
-                            type: "sawtooth"
-                        },
-                        envelope: {
-                            attack: 0.3,
-                            decay: 0.1,
-                            sustain: 0.8,
-                            release: 1.5
-                        }
-                    }).toDestination();
-                    break;
-                    
-                case 'synth':
-                    // Modern synthesizer
-                    synth = new Tone.FMSynth({
-                        harmonicity: 3,
-                        modulationIndex: 10,
-                        oscillator: {
-                            type: "sine"
-                        },
-                        envelope: {
-                            attack: 0.01,
-                            decay: 0.2,
-                            sustain: 0.5,
-                            release: 0.5
-                        }
-                    }).toDestination();
-                    break;
-                    
-                case 'sine':
-                case 'triangle':
-                case 'square':
-                    // Basic waveforms
-                    synth = new Tone.Synth({
-                        oscillator: {
-                            type: instrumentType
-                        },
-                        envelope: {
-                            attack: 0.005,
-                            decay: 0.1,
-                            sustain: 0.3,
-                            release: 0.3
-                        }
-                    }).toDestination();
-                    break;
-                    
-                default:
-                    synth = new Tone.Synth().toDestination();
-            }
-            
-            console.log(`🎵 Initialized instrument: ${instrumentType}`);
+        
+        // Update status
+        function setStatus(msg) {
+            document.getElementById('status').textContent = msg;
         }
-
-        // Initialize piano visual
-        function initPianoVisual() {
-            const container = document.getElementById('pianoVisual');
-            container.innerHTML = '';
-            const currentScale = scales[document.getElementById('scale').value];
-            
-            for (let i = 0; i < 10; i++) {
-                const key = document.createElement('div');
-                key.className = 'piano-key';
-                key.id = `key-${i}`;
-                key.innerHTML = `
-                    <div class="key-digit">${i}</div>
-                    <div class="key-note">${currentScale[i]}</div>
-                `;
-                container.appendChild(key);
-            }
-        }
-
-        // Display digit
-        function displayDigit(digit) {
-            const displayEl = document.getElementById('piDigitsDisplay');
-            const span = document.createElement('span');
-            span.className = 'digit';
-            span.textContent = digit;
-            displayEl.appendChild(span);
-            
-            if (displayEl.children.length % 50 === 0) {
-                displayEl.parentElement.scrollTop = displayEl.parentElement.scrollHeight;
-            }
-        }
-
-        // Fetch in background
-        async function fetchInBackground() {
-            const chunkSize = 1000;
-            
-            while (isFetching && fetchedDigits < targetDigits) {
-                // Keep buffer of 500 digits ahead
-                if (fetchedDigits > playbackPosition + 500) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    continue;
-                }
-                
-                const remaining = targetDigits - fetchedDigits;
-                const currentChunkSize = Math.min(chunkSize, remaining);
-                
-                try {
-                    const chunk = await fetchChunk(fetchedDigits, currentChunkSize);
-                    piDigits += chunk;
-                    
-                    for (const digit of chunk) {
-                        displayDigit(digit);
-                    }
-                    
-                    fetchedDigits += chunk.length;
-                    updateStats();
-                    
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                }
-            }
-            
-            console.log('✅ Finished fetching');
-        }
-
+        
         // Play note
         function playNote(digit) {
+            if (!synth) return;
+            
+            const note = notes[parseInt(digit)];
+            const duration = parseInt(document.getElementById('speed').value) / 1000;
+            
             try {
-                const currentScale = scales[document.getElementById('scale').value];
-                const note = currentScale[parseInt(digit)];
-                const duration = parseInt(document.getElementById('playbackSpeed').value) / 1000;
-                
-                // Check if instrument changed
-                if (currentInstrument !== document.getElementById('instrument').value) {
-                    console.log('🎵 Changing instrument...');
-                    initAudio();
-                }
-                
-                // Skip if synth not ready
-                if (!synth) {
-                    console.warn('⚠️ Synth not initialized');
-                    return;
-                }
-                
-                // For piano (Sampler), check if loaded
-                if (currentInstrument === 'piano') {
-                    if (synth.loaded === false) {
-                        console.log('⏳ Piano samples loading...');
-                        return;
-                    }
-                }
-                
-                // Play the note
                 synth.triggerAttackRelease(note, `${duration}s`);
                 
-                // Highlight piano key
-                document.querySelectorAll('.piano-key').forEach(key => key.classList.remove('active'));
-                const keyEl = document.getElementById(`key-${digit}`);
-                if (keyEl) keyEl.classList.add('active');
+                // Highlight key
+                document.querySelectorAll('.key').forEach(k => k.classList.remove('active'));
+                document.getElementById(`key${digit}`).classList.add('active');
                 
                 // Highlight digit
                 document.querySelectorAll('.digit').forEach(d => d.classList.remove('playing'));
-                const digitEl = document.querySelectorAll('.digit')[playbackPosition];
-                if (digitEl) {
-                    digitEl.classList.add('playing');
-                    digitEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const digitEls = document.querySelectorAll('.digit');
+                if (digitEls[position]) {
+                    digitEls[position].classList.add('playing');
                 }
-                
-                updateStats();
             } catch (error) {
-                console.error('Error playing note:', error);
+                console.error('Play error:', error);
             }
         }
-
-        // Update stats
-        function updateStats() {
-            document.getElementById('statFetched').textContent = fetchedDigits.toLocaleString();
-            document.getElementById('statPlayed').textContent = playbackPosition.toLocaleString();
+        
+        // Start
+        async function start() {
+            setStatus('🔊 Initializing audio...');
             
-            const buffer = fetchedDigits - playbackPosition;
-            document.getElementById('statBuffer').textContent = buffer.toLocaleString();
-            
-            const fetchPercent = ((fetchedDigits / targetDigits) * 100).toFixed(1);
-            const playPercent = ((playbackPosition / targetDigits) * 100).toFixed(1);
-            
-            document.getElementById('fetchProgress').style.width = fetchPercent + '%';
-            document.getElementById('fetchProgress').textContent = fetchPercent + '%';
-            
-            document.getElementById('playProgress').style.width = playPercent + '%';
-            document.getElementById('playProgress').textContent = playPercent + '%';
-        }
-
-        // Start streaming
-        async function startStreaming() {
-            targetDigits = parseInt(document.getElementById('targetDigits').value);
-            
-            // Reset
-            piDigits = '';
-            fetchedDigits = 0;
-            playbackPosition = 0;
-            isFetching = true;
-            isPlaying = true;
-            document.getElementById('piDigitsDisplay').innerHTML = '';
-            
-            initPianoVisual();
-            
-            // CRITICAL: Initialize audio on user tap (required for mobile)
-            console.log('🔊 Initializing audio...');
-            await initAudio();
-            
-            // Test sound to ensure audio works
-            if (!audioInitialized) {
-                alert('⚠️ Audio failed to initialize. Please try again.');
-                return;
-            }
-            
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('startBtn').textContent = '🎵 Loading...';
-            
-            console.log('🎵 Starting Pi music stream...');
-            
-            // Start fetching in background
-            fetchInBackground();
-            
-            // Wait for initial buffer
-            let waitCount = 0;
-            while (piDigits.length < 10 && waitCount < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                waitCount++;
-            }
-            
-            if (piDigits.length < 10) {
-                alert('⚠️ Failed to fetch initial digits. Check your internet connection.');
-                stopMusic();
-                return;
-            }
-            
-            document.getElementById('startBtn').textContent = '🎵 Playing...';
-            
-            // Start playing
-            const speed = parseInt(document.getElementById('playbackSpeed').value);
-            
-            playbackInterval = setInterval(() => {
-                if (playbackPosition >= targetDigits) {
-                    stopMusic();
-                    return;
+            try {
+                // CRITICAL: Start audio context
+                await Tone.start();
+                console.log('Audio context started');
+                
+                // Create synth
+                const type = document.getElementById('instrument').value;
+                synth = new Tone.Synth({
+                    oscillator: { type: type },
+                    envelope: {
+                        attack: 0.01,
+                        decay: 0.1,
+                        sustain: 0.3,
+                        release: 0.2
+                    }
+                }).toDestination();
+                
+                // Set volume
+                synth.volume.value = -10;
+                
+                console.log('Synth created');
+                
+                // Test sound
+                setStatus('🎵 Testing audio...');
+                synth.triggerAttackRelease('C4', '0.1');
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                setStatus('📥 Fetching Pi...');
+                
+                // Fetch initial digits
+                piDigits = await fetchPi(0, 1000);
+                
+                // Display digits
+                const digitsDiv = document.getElementById('digits');
+                digitsDiv.innerHTML = '';
+                for (const digit of piDigits) {
+                    const span = document.createElement('span');
+                    span.className = 'digit';
+                    span.textContent = digit;
+                    digitsDiv.appendChild(span);
                 }
                 
-                // Wait if buffer is empty
-                if (playbackPosition >= piDigits.length) {
-                    document.getElementById('statPlaying').textContent = '⏳ Buffering...';
-                    return;
-                }
+                position = 0;
+                isPlaying = true;
                 
-                const digit = piDigits[playbackPosition];
-                document.getElementById('statPlaying').textContent = `${digit} → ${scales[document.getElementById('scale').value][parseInt(digit)]}`;
-                playNote(digit);
-                playbackPosition++;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'block';
                 
-            }, speed);
+                setStatus('🎵 Playing Pi!');
+                
+                // Start playing
+                const speed = parseInt(document.getElementById('speed').value);
+                interval = setInterval(() => {
+                    if (position >= piDigits.length) {
+                        stop();
+                        return;
+                    }
+                    
+                    const digit = piDigits[position];
+                    setStatus(`🎵 Playing: ${digit} → ${notes[parseInt(digit)]}`);
+                    playNote(digit);
+                    position++;
+                }, speed);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                setStatus('❌ Error: ' + error.message);
+                alert('Audio failed to start. Please:\n1. Turn up volume\n2. Unmute phone\n3. Try again');
+            }
         }
-
-        // Pause
-        function pauseMusic() {
-            isPlaying = false;
-            isFetching = false;
-            clearInterval(playbackInterval);
-            document.querySelectorAll('.piano-key').forEach(key => key.classList.remove('active'));
-            document.querySelectorAll('.digit').forEach(d => d.classList.remove('playing'));
-        }
-
+        
         // Stop
-        function stopMusic() {
-            pauseMusic();
-            playbackPosition = 0;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('startBtn').textContent = '🎵 Start Music Stream';
-            alert('🎵 Music stream stopped!');
+        function stop() {
+            isPlaying = false;
+            if (interval) clearInterval(interval);
+            
+            document.querySelectorAll('.key').forEach(k => k.classList.remove('active'));
+            document.querySelectorAll('.digit').forEach(d => d.classList.remove('playing'));
+            
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            
+            setStatus('Stopped. Tap START to play again.');
         }
-
-        // Initialize
+        
+        // Initialize on load
         window.onload = () => {
-            initPianoVisual();
+            initPiano();
+            console.log('Ready! Tap START button.');
         };
     </script>
 </body>
