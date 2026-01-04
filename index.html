@@ -484,6 +484,7 @@
         let playbackInterval;
         let fetchInterval;
         let currentInstrument = 'piano';
+        let audioInitialized = false;
 
         // Fetch chunk
         async function fetchChunk(start, count) {
@@ -495,8 +496,14 @@
         }
 
         // Initialize audio with different instruments
-        function initAudio() {
-            Tone.start();
+        async function initAudio() {
+            // CRITICAL: Start Tone.js AudioContext (required for mobile)
+            if (!audioInitialized) {
+                console.log('🔊 Starting audio context...');
+                await Tone.start();
+                audioInitialized = true;
+                console.log('✅ Audio context started!');
+            }
             
             const instrumentType = document.getElementById('instrument').value;
             currentInstrument = instrumentType;
@@ -519,6 +526,9 @@
                         },
                         release: 1,
                         baseUrl: "https://tonejs.github.io/audio/salamander/",
+                        onload: () => {
+                            console.log('🎹 Piano samples loaded!');
+                        }
                     }).toDestination();
                     break;
                     
@@ -692,37 +702,51 @@
 
         // Play note
         function playNote(digit) {
-            const currentScale = scales[document.getElementById('scale').value];
-            const note = currentScale[parseInt(digit)];
-            const duration = parseInt(document.getElementById('playbackSpeed').value) / 1000;
-            
-            // Check if instrument changed
-            if (currentInstrument !== document.getElementById('instrument').value) {
-                console.log('🎵 Changing instrument...');
-                initAudio();
+            try {
+                const currentScale = scales[document.getElementById('scale').value];
+                const note = currentScale[parseInt(digit)];
+                const duration = parseInt(document.getElementById('playbackSpeed').value) / 1000;
+                
+                // Check if instrument changed
+                if (currentInstrument !== document.getElementById('instrument').value) {
+                    console.log('🎵 Changing instrument...');
+                    initAudio();
+                }
+                
+                // Skip if synth not ready
+                if (!synth) {
+                    console.warn('⚠️ Synth not initialized');
+                    return;
+                }
+                
+                // For piano (Sampler), check if loaded
+                if (currentInstrument === 'piano') {
+                    if (synth.loaded === false) {
+                        console.log('⏳ Piano samples loading...');
+                        return;
+                    }
+                }
+                
+                // Play the note
+                synth.triggerAttackRelease(note, `${duration}s`);
+                
+                // Highlight piano key
+                document.querySelectorAll('.piano-key').forEach(key => key.classList.remove('active'));
+                const keyEl = document.getElementById(`key-${digit}`);
+                if (keyEl) keyEl.classList.add('active');
+                
+                // Highlight digit
+                document.querySelectorAll('.digit').forEach(d => d.classList.remove('playing'));
+                const digitEl = document.querySelectorAll('.digit')[playbackPosition];
+                if (digitEl) {
+                    digitEl.classList.add('playing');
+                    digitEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                updateStats();
+            } catch (error) {
+                console.error('Error playing note:', error);
             }
-            
-            // For piano (Sampler), we need to wait for it to load
-            if (currentInstrument === 'piano' && synth.loaded === false) {
-                // Piano samples still loading, skip this note
-                return;
-            }
-            
-            synth.triggerAttackRelease(note, `${duration}s`);
-            
-            // Highlight piano key
-            document.querySelectorAll('.piano-key').forEach(key => key.classList.remove('active'));
-            document.getElementById(`key-${digit}`).classList.add('active');
-            
-            // Highlight digit
-            document.querySelectorAll('.digit').forEach(d => d.classList.remove('playing'));
-            const digitEl = document.querySelectorAll('.digit')[playbackPosition];
-            if (digitEl) {
-                digitEl.classList.add('playing');
-                digitEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-            updateStats();
         }
 
         // Update stats
@@ -756,9 +780,19 @@
             document.getElementById('piDigitsDisplay').innerHTML = '';
             
             initPianoVisual();
-            initAudio();
+            
+            // CRITICAL: Initialize audio on user tap (required for mobile)
+            console.log('🔊 Initializing audio...');
+            await initAudio();
+            
+            // Test sound to ensure audio works
+            if (!audioInitialized) {
+                alert('⚠️ Audio failed to initialize. Please try again.');
+                return;
+            }
             
             document.getElementById('startBtn').disabled = true;
+            document.getElementById('startBtn').textContent = '🎵 Loading...';
             
             console.log('🎵 Starting Pi music stream...');
             
@@ -766,9 +800,19 @@
             fetchInBackground();
             
             // Wait for initial buffer
-            while (piDigits.length < 10) {
+            let waitCount = 0;
+            while (piDigits.length < 10 && waitCount < 50) {
                 await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
             }
+            
+            if (piDigits.length < 10) {
+                alert('⚠️ Failed to fetch initial digits. Check your internet connection.');
+                stopMusic();
+                return;
+            }
+            
+            document.getElementById('startBtn').textContent = '🎵 Playing...';
             
             // Start playing
             const speed = parseInt(document.getElementById('playbackSpeed').value);
@@ -807,6 +851,7 @@
             pauseMusic();
             playbackPosition = 0;
             document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').textContent = '🎵 Start Music Stream';
             alert('🎵 Music stream stopped!');
         }
 
